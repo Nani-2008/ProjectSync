@@ -1,24 +1,23 @@
 import React, { useState, useEffect } from 'react';
 import './App.css';
 
-import Navbar from './components/Navbar.jsx';
-import Sidebar from './components/Sidebar.jsx';
-import AdminDashboard from './components/AdminDashboard.jsx';
-import StudentDashboard from './components/StudentDashboard.jsx';
-import LoginPage from './components/LoginPage.jsx';
-import GroupCollaboration from './components/GroupCollaboration.jsx';
-import ProjectDetails from './components/ProjectDetails.jsx';
-import GroupsPage from './components/GroupsPage.jsx';
-import ProjectsPage from './components/ProjectsPage.jsx';
-import SubmissionsPage from './components/SubmissionsPage.jsx';
-import CreateGroupPage from './components/CreateGroupPage.jsx';
-import CreateProjectPage from './components/CreateProjectPage.jsx';
+import Navbar from './Components/Navbar.jsx';
+import Sidebar from './Components/Sidebar.jsx';
+import AdminDashboard from './Components/AdminDashboard.jsx';
+import StudentDashboard from './Components/StudentDashboard.jsx';
+import LoginPage from './Components/LoginPage.jsx';
+import GroupCollaboration from './Components/GroupCollaboration.jsx';
+import ProjectDetails from './Components/ProjectDetails.jsx';
+import GroupsPage from './Components/GroupsPage.jsx';
+import ProjectsPage from './Components/ProjectsPage.jsx';
+import SubmissionsPage from './Components/SubmissionsPage.jsx';
+import CreateGroupPage from './Components/CreateGroupPage.jsx';
+import CreateProjectPage from './Components/CreateProjectPage.jsx';
 
-// SAMPLE DATA
 const MOCK_USERS = [
   { id: 1, name: 'Dr. Rajesh Kumar', email: 'teacher@uni.com', password: 'password123', role: 'teacher', avatar: '👨‍🏫' },
   { id: 2, name: 'Priya Singh', email: 'student@uni.com', password: 'password123', role: 'student', avatar: '👩‍🎓', year: 2 },
-  { id: 3, name: 'Arjun Patel', email: 'arjun@uni.com', password: 'password123', role: 'student', avatar: '👨‍🎓', year: 2 },
+  { id: 3, name: 'Arjun Patel', email: 'arjun@uni.com', password: 'kkk', role: 'student', avatar: '👨‍🎓', year: 2 },
   { id: 4, name: 'Neha Sharma', email: 'neha@uni.com', password: 'password123', role: 'student', avatar: '👩‍💻', year: 2 },
   { id: 5, name: 'Vikram Desai', email: 'vikram@uni.com', password: 'password123', role: 'student', avatar: '👨‍💻', year: 2 },
 ];
@@ -36,7 +35,13 @@ const MOCK_PROJECTS = [
 ];
 
 export default function App() {
-  const [authState, setAuthState] = useState({ isAuthenticated: false, user: null });
+  const [authState, setAuthState] = useState(() => {
+  const savedUser = localStorage.getItem("projectsync_user");
+  return savedUser
+    ? { isAuthenticated: true, user: JSON.parse(savedUser) }
+    : { isAuthenticated: false, user: null };
+});
+
   const [currentPage, setCurrentPage] = useState('dashboard');
   const [selectedProjectId, setSelectedProjectId] = useState(1);
   const [selectedGroupId, setSelectedGroupId] = useState(1);
@@ -60,13 +65,17 @@ export default function App() {
   }, [projects]);
 
   const handleLoginSuccess = (user) => {
-    setAuthState({ isAuthenticated: true, user });
-  };
+  localStorage.setItem("projectsync_user", JSON.stringify(user));
+  setAuthState({ isAuthenticated: true, user });
+};
+
 
   const handleLogout = () => {
-    setAuthState({ isAuthenticated: false, user: null });
-    setCurrentPage('dashboard');
-  };
+  localStorage.removeItem("projectsync_user");
+  setAuthState({ isAuthenticated: false, user: null });
+  setCurrentPage('dashboard');
+};
+
 
   const handleNavigate = (page, id) => {
   setCurrentPage(page);
@@ -82,19 +91,22 @@ export default function App() {
 
 
   const handleCreateGroup = (data) => {
-    setGroups(prev => {
-      const nextId = prev.length ? Math.max(...prev.map(g => g.id)) + 1 : 1;
-      const newGroup = {
-        id: nextId,
-        name: data.name,
-        members: [],                  
-        status: 'active',
-        createdDate: new Date().toISOString().slice(0, 10),
-      };
-      return [...prev, newGroup];
-    });
-    setCurrentPage('groups');
-  };
+  setGroups(prev => {
+    const nextId = prev.length ? Math.max(...prev.map(g => g.id)) + 1 : 1;
+    const newGroup = {
+      id: nextId,
+      name: data.name,
+      members: data.memberIds || [],   // ⭐ store selected member IDs
+      status: 'active',
+      createdDate: new Date().toISOString().slice(0, 10),
+      note: data.note || '',
+    };
+    return [...prev, newGroup];
+  });
+
+  setCurrentPage('groups');
+};
+
 
   const handleCreateProject = (data) => {
     setProjects(prev => {
@@ -144,7 +156,6 @@ export default function App() {
         />
 
         <main className="main-content">
-  {/* Teacher Dashboard */}
   {isTeacher && currentPage === 'dashboard' && (
     <AdminDashboard
       user={authState.user}
@@ -154,7 +165,6 @@ export default function App() {
     />
   )}
 
-  {/* Teacher Groups Page */}
   {isTeacher && currentPage === 'groups' && (
     <GroupsPage
       groups={groups}
@@ -163,7 +173,6 @@ export default function App() {
     />
   )}
 
-  {/* Teacher Projects Page */}
   {isTeacher && currentPage === 'projects' && (
   <ProjectsPage
     projects={projects}
@@ -173,18 +182,17 @@ export default function App() {
 )}
 
 
-  {/* Teacher Submissions Page */}
   {isTeacher && currentPage === 'submissions' && <SubmissionsPage />}
 
-  {/* Teacher Create Group */}
   {isTeacher && currentPage === 'createGroup' && (
-    <CreateGroupPage
-      onBack={() => setCurrentPage('dashboard')}
-      onCreateGroup={handleCreateGroup}
-    />
-  )}
+  <CreateGroupPage
+    onBack={() => setCurrentPage('dashboard')}
+    onCreateGroup={handleCreateGroup}
+    students={MOCK_USERS.filter(u => u.role === 'student')}  // ⭐ pass students
+  />
+)}
 
-  {/* Teacher Create Project */}
+
   {isTeacher && currentPage === 'createProject' && (
     <CreateProjectPage
       onBack={() => setCurrentPage('dashboard')}
@@ -192,29 +200,29 @@ export default function App() {
     />
   )}
 
-  {/* Student Dashboard */}
-  {isStudent && currentPage === 'dashboard' && (
-    <StudentDashboard
-      user={authState.user}
-      onNavigate={handleNavigate}
-    />
-  )}
+  {isStudent && ['dashboard', 'tasks', 'milestones'].includes(currentPage) && (
+  <StudentDashboard
+    user={authState.user}
+     mode={currentPage}
+    onNavigate={handleNavigate}
+  />
+)}
 
-  {/* Student / Teacher — Group Collaboration */}
-  {(isStudent || isTeacher) && currentPage === 'collaboration' && (
-    <GroupCollaboration
-      groupId={selectedGroupId}
-      user={authState.user}
-    />
-  )}
+{(isStudent || isTeacher) && currentPage === 'collaboration' && (
+  <GroupCollaboration
+    groupId={selectedGroupId}
+    user={authState.user}
+    groups={groups}
+  />
+)}
 
-  {/* Student Project Details */}
-  {isStudent && currentPage === 'projectDetails' && (
-    <ProjectDetails
-      projectId={selectedProjectId}
-      user={authState.user}
-    />
-  )}
+
+{isStudent && (currentPage === 'projects' || currentPage === 'projectDetails') && (
+  <ProjectDetails
+    projectId={selectedProjectId}
+    user={authState.user}
+  />
+)}
 
    {isTeacher && currentPage === 'projectDetails' && (
   <ProjectDetails

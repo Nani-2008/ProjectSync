@@ -4,8 +4,11 @@ import Button from './Button.jsx';
 const MOCK_USERS = [
   { id: 1, name: 'Dr. Rajesh Kumar', email: 'teacher@uni.com', password: 'password123', role: 'teacher', avatar: '👨‍🏫' },
   { id: 2, name: 'Priya Singh', email: 'student@uni.com', password: 'password123', role: 'student', avatar: '👩‍🎓', year: 2 },
+  { id: 3, name: 'Arjun Patel', email: 'arjun@uni.com', password: 'kkk', role: 'student', avatar: '👨‍🎓', year: 2 },
+  { id: 4, name: 'Neha Sharma', email: 'neha@uni.com', password: 'password123', role: 'student', avatar: '👩‍💻', year: 2 },
+  { id: 5, name: 'Vikram Desai', email: 'vikram@uni.com', password: 'password123', role: 'student', avatar: '👨‍💻', year: 2 },
 ];
-
+  
 const LoginPage = ({ onLoginSuccess, onSwitchToSignup }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
